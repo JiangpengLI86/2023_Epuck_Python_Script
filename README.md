@@ -10,12 +10,18 @@ variety of complex tasks. It is necesary that the ePuck has installed
 the Webot's fimware 1.4.2 or 1.4.3. You can find this fantastic 
 simulator on this site: http://www.cyberbotics.com/
 
-This library is written in Python 2.6, and you can import it from
+This library is rewritten in Python 3.11, and you can import it from
 any program written in Python  (same version or later). In addition 
 to this, you will also need two extra libraries:
 
 - Python Bluetooth or Pybluez
+    > pip install git+https://github.com/pybluez/pybluez.git#egg=pybluez
+
+    > import bluetooth
 - Python Image Library (PIL)
+    > pip install Pillow
+    
+    > from PIL import Image
 
 In this package you will find some examples of how to use this library.
 
@@ -30,5 +36,3 @@ and you need to take the sensors data and write on the actuators
 values on the ePuck
 
 For further information and updates visit [the project wepage](https://blog.martinortiz.eu/projects/epuck-robot-libraries-for-teleoperation/)
-
-**Note**: This library was design for Python 2. A lot of things have changed shince I started this development, and I do not have access to an ePuck anymore. 
