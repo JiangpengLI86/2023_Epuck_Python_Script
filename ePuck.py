@@ -56,6 +56,7 @@ import bluetooth  # Used for communications
 import time  # Used for image capture process
 import struct  # Used for Big-Endian messages
 from PIL import Image  # Used for the pictures of the camera
+import chardet
 
 __package__ = "ePuck"
 __docformat__ = "restructuredtext"
@@ -193,6 +194,10 @@ class ePuck():
 
         try:
             line = self.socket.recv(n)
+            # line = line.decode('utf-8')
+            # print(line)
+            # print('-' * 20)
+
             self.messages_received += 1
         except bluetooth.btcommon.BluetoothError as e:
             txt = 'Bluetooth communication problem: ' + str(e)
@@ -329,19 +334,43 @@ class ePuck():
         # Binary mode whenever we can. Not all sensors are available in
         # Binary mode
 
+        # def send_binary_mode(parameters):
+        #     # Auxiliar function for sent messages in binary modes
+        #     # Parameters: ('Char to be sent', 'Size of reply waited', 'Format of the teply')
+        #
+        #     self._debug('Sending binary message: ', ','.join('%s' % i for i in parameters))
+        #     message = struct.pack(">bb", - ord(parameters[0]), 0)
+        #     self._send(message)
+        #     time.sleep(0.5)  # Do not remove this line, it's waiting for reply.
+        #     reply = self._recv()
+        #     while len(reply) < parameters[1]:
+        #         reply += self._recv()
+        #     # reply = struct.unpack("i", bytes(parameters[2], 'utf-8'))[0]
+        #     # reply = int(bytes(parameters[2], 'utf-8'), 16)
+        #     # reply = struct.unpack(bytes(parameters[2], 'utf-8'), bytes(reply, 'utf-8'))
+        #     reply = struct.unpack(parameters[2], reply)
+        #
+        #     self._debug('Binary message recived: ', reply)
+        #     return reply
+
         def send_binary_mode(parameters):
-            # Auxiliar function for sent messages in binary modes
-            # Parameters: ('Char to be sent', 'Size of reply waited', 'Format of the teply')
+            message = str(parameters[0])
 
-            self._debug('Sending binary message: ', ','.join('%s' % i for i in parameters))
-            message = struct.pack(">bb", - ord(parameters[0]), 0)
-            self._send(message)
+            # Add carriage return if not
+            if not message.endswith('\n'):
+                message += '\n'
+
+            self._debug(f'Sending message: {message}')
+            bytes = self._send(message)
+
+            # time.sleep(0.5)
+
             reply = self._recv()
-            while len(reply) < parameters[1]:
-                reply += self._recv()
-            reply = struct.unpack(parameters[2], reply)
+            # Add carriage return if not
+            if not reply.endswith('\n'):
+                reply += '\n'
+            self._debug('Message received: ', reply)
 
-            self._debug('Binary message recived: ', reply)
             return reply
 
         # Read differents sensors
@@ -438,7 +467,7 @@ class ePuck():
         try:
             self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
             self.socket.connect((self.address, 1))
-            self.socket.settimeout(0.5)
+            self.socket.settimeout(1)
 
         except Exception as e:
             txt = 'Connection problem: \n' + str(e)
@@ -524,6 +553,7 @@ class ePuck():
         while tries < 5:
             # Send the message
             bytes = self._send(message)
+            # time.sleep(0.5)
             self._debug('Message sent:', repr(message))
             self._debug('Bytes sent:', bytes)
 
@@ -532,17 +562,21 @@ class ePuck():
                 reply = ''
                 while reply.count('\n') < lines:
                     reply += self._recv()
+                    print(reply)
                     if message[0] == 'R':
                         # For some reason that I don't understand, if you send a reset
                         # command 'R', sometimes you recive 1 or 2 lines of 'z,Command not found\r\n'
                         # Therefor I have to remove it from the expected message: The Hello message
-                        reply = reply.replace('z,Command not found\r\n' ,'')
+                        reply = reply.replace('z,Command not found\r\n', '')
                 self._debug('Message received: ', reply)
-                return reply.replace('\r\n' ,'')
+                return reply.replace('\r\n', '')
 
             except Exception as e:
                 tries += 1
                 self._debug('Communication timeout, retrying')
+
+        # self._debug('Connection Failed')
+        # raise Exception('Communication timeout')
 
 
 
