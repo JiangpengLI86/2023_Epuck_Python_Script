@@ -30,7 +30,6 @@
 #			* Bluetooth device
 
 from ePuck import ePuck
-import time
 import sys
 import re
 
